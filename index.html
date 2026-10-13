@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101319">
+<title>Dragon's Legacy — Prototype</title>
+<style>
+:root{color-scheme:dark;--gold:#d7b36a;--panel:rgba(12,15,21,.82);--red:#e35d62;--blue:#8bd6ee}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101319;font-family:system-ui,-apple-system,sans-serif;touch-action:none;color:#f5f2ea}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;inset:0;pointer-events:none;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-top:10px}
+.brand{font-weight:900;letter-spacing:.12em;color:var(--gold);font-size:12px;text-shadow:0 2px 8px #000}
+.subtitle{font-size:10px;letter-spacing:.12em;opacity:.7;margin-top:2px}
+.bars{width:min(47vw,210px);margin-top:9px}
+.barline{height:10px;background:#17191e;border:1px solid #d6c7a45c;border-radius:99px;overflow:hidden;margin:4px 0}
+.fill{height:100%;width:100%;transition:width .12s linear}
+#hp{background:linear-gradient(90deg,#8b202b,#ee6266)}#stamina{background:linear-gradient(90deg,#98732c,#f0d17b)}
+.barlabel{display:flex;justify-content:space-between;font-size:10px;text-shadow:0 1px 4px #000}
+#enemyHud{position:absolute;top:94px;left:50%;transform:translateX(-50%);width:min(66vw,300px);text-align:center;display:none}
+#enemyHud .name{font-size:11px;letter-spacing:.16em;color:#f0d4a0;text-shadow:0 2px 5px #000}
+#enemyBar{height:8px;border:1px solid #e9d6b477;border-radius:99px;background:#171419;overflow:hidden;margin-top:5px}
+#enemyFill{height:100%;width:100%;background:linear-gradient(90deg,#7e1522,#d9464e)}
+#message{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);text-align:center;font-weight:800;letter-spacing:.1em;font-size:clamp(17px,5vw,27px);text-shadow:0 3px 14px #000;opacity:0;transition:opacity .25s;max-width:90vw}
+#message small{display:block;font-size:11px;font-weight:500;letter-spacing:.03em;margin-top:8px}
+#hint{position:absolute;top:75px;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;color:#eee5d2;text-shadow:0 2px 6px #000;opacity:.85}
+#controls{position:fixed;inset:0;pointer-events:none}
+#stickZone{pointer-events:auto;position:absolute;left:12px;bottom:calc(18px + env(safe-area-inset-bottom));width:136px;height:136px;border-radius:50%;background:#10131b55;border:1px solid #ffffff35;touch-action:none}
+#stick{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#d8cba4cc,#4e4c4aee);border:1px solid #fff8;box-shadow:0 3px 15px #0008}
+.actions{pointer-events:auto;position:absolute;right:13px;bottom:calc(20px + env(safe-area-inset-bottom));width:166px;height:158px;touch-action:none}
+.btn{position:absolute;border:1px solid #e7d6ad8c;color:#fff7e5;background:radial-gradient(circle at 35% 25%,#4a4a4b,#171920 75%);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 4px 12px #0008;user-select:none;touch-action:none}
+.btn b{font-size:11px;letter-spacing:.04em}.btn small{font-size:8px;opacity:.7;margin-top:2px}
+.btn:active{background:radial-gradient(circle,#92713d,#28201b)}
+#attack{width:72px;height:72px;right:0;bottom:12px;border-color:#d7b36a}
+#dodge{width:54px;height:54px;left:0;bottom:0}
+#skill{width:54px;height:54px;right:63px;top:0;border-color:#86c9dd}
+#lock{position:absolute;right:16px;top:14px;pointer-events:auto;padding:8px 11px;border:1px solid #e7d6ad77;border-radius:12px;background:var(--panel);font-size:10px;color:#fff;touch-action:manipulation}
+#lock.active{color:var(--gold);border-color:var(--gold)}
+#help{position:absolute;left:50%;bottom:calc(178px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:9px;color:#eee;opacity:.68;white-space:nowrap;text-shadow:0 1px 5px #000}
+#pause{pointer-events:auto;position:absolute;right:14px;top:55px;background:var(--panel);border:1px solid #ffffff44;color:white;border-radius:10px;padding:7px 10px;font-size:10px}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(#080b10b8,#080b10ed);padding:22px;z-index:5}
+.card{width:min(430px,100%);border:1px solid #d7b36a66;border-radius:20px;background:linear-gradient(145deg,#20232a,#0c0e13);padding:24px;box-shadow:0 20px 70px #000a}
+.kicker{color:var(--gold);font-size:10px;letter-spacing:.22em;font-weight:800}
+h1{font-size:clamp(28px,8vw,40px);line-height:1;margin:10px 0 12px;letter-spacing:-.04em}
+.card p{font-size:13px;line-height:1.55;color:#c9cbd0}
+.card ul{font-size:12px;line-height:1.8;color:#e8e1d2;padding-left:18px}
+.start{width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(90deg,#b48a40,#e6c77c);font-weight:900;color:#17130b;font-size:13px;margin-top:8px}
+#rotate{display:none;position:fixed;inset:0;z-index:4;background:#080a0e;color:white;align-items:center;justify-content:center;text-align:center;padding:30px}
+@media (orientation:landscape) and (max-height:500px){.bars{margin-top:4px}.top{padding-top:3px}#enemyHud{top:60px}#hint{top:55px}#stickZone{width:112px;height:112px;bottom:10px}#controls .actions{transform:scale(.85);transform-origin:bottom right;bottom:8px}#help{display:none}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+ <div class="top"><div><div class="brand">DRAGON'S LEGACY</div><div class="subtitle">PROTOYPE · BUILD 0.1</div><div class="bars">
+  <div class="barlabel"><span>VITALITÉ</span><span id="hpText">100 / 100</span></div><div class="barline"><div class="fill" id="hp"></div></div>
+  <div class="barlabel"><span>ENDURANCE</span><span id="stText">100 / 100</span></div><div class="barline"><div class="fill" id="stamina"></div></div>
+ </div></div><div style="text-align:right;font-size:10px;text-shadow:0 2px 5px #000">ASSASSIN<br><span style="color:#d7b36a">NIVEAU 1</span><br><span id="kills">OGRES vaincus : 0</span></div></div>
+ <div id="hint">Vaincs l'ogre pour tester tes dagues.</div>
+ <div id="enemyHud"><div class="name">OGRE DES RUINES <span id="enemyPct">100%</span></div><div id="enemyBar"><div id="enemyFill"></div></div></div>
+ <div id="message"></div>
+</div>
+<div id="controls">
+ <div id="stickZone"><div id="stick"></div></div>
+ <div class="actions">
+  <div class="btn" id="attack"><b>ATTAQUE</b><small>enchaînement</small></div>
+  <div class="btn" id="dodge"><b>ESQUIVE</b><small>coûte 22</small></div>
+  <div class="btn" id="skill"><b>ÉCLIPSE</b><small>coûte 35</small></div>
+ </div>
+ <button id="lock">◎ CIBLER</button><button id="pause">Ⅱ Pause</button>
+ <div id="help">JOYSTICK : bouger · Glisse à droite : orienter la caméra</div>
+</div>
+<div id="overlay"><div class="card"><div class="kicker">CHAPITRE I · LES RUINES OUBLIÉES</div><h1>Dragon's<br>Legacy</h1><p>La première version jouable de ton action-RPG 3D. Incarne un assassin aux deux dagues et affronte un ogre dans une arène de ruines.</p><ul><li>Déplacement tactile et caméra à la troisième personne</li><li>Attaques, esquive et compétence spéciale</li><li>Ennemi avec IA simple, points de vie et riposte</li></ul><p style="font-size:10px;color:#9da1a8">Connexion Internet nécessaire pour charger le moteur 3D. Prototype expérimental : les graphismes et mécaniques seront enrichis.</p><button class="start" id="start">ENTRER DANS LES RUINES</button></div></div>
+<div id="rotate">Pour une meilleure expérience, tourne ton téléphone en mode paysage.</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const canvas=document.querySelector('#game');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x8995a0);scene.fog=new THREE.Fog(0x8995a0,20,62);
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,120);
+scene.add(new THREE.HemisphereLight(0xc8d9ed,0x3b3027,2.0));
+const sun=new THREE.DirectionalLight(0xffe4b5,3.0);sun.position.set(-9,16,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=22;sun.shadow.camera.bottom=-22;scene.add(sun);
+const fill=new THREE.PointLight(0x83a9d8,18,24);fill.position.set(5,5,-5);scene.add(fill);
+const mat=(color,roughness=.8,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const stone=mat(0x68645d),stoneLight=mat(0x827a6b),darkStone=mat(0x383b3c),moss=mat(0x465344),floorMat=mat(0x55534d),leather=mat(0x272a30),cloth=mat(0x171d28),steel=mat(0xb8c3c8,.3,.8),gold=mat(0xb68a42,.35,.65),skin=mat(0xc28c68),enemySkin=mat(0x6c7560),enemyCloth=mat(0x393c32),eyeMat=new THREE.MeshBasicMaterial({color:0xff5b38});
+function mesh(geo,material,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function box(parent,x,y,z,sx,sy,sz,material,rotY=0){const m=mesh(new THREE.BoxGeometry(sx,sy,sz),material,parent,x,y,z);m.rotation.y=rotY;return m}
+const ground=mesh(new THREE.PlaneGeometry(100,100),floorMat,scene,0,-.12,0);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+// Arena paving
+for(let i=-8;i<=8;i++)for(let j=-8;j<=8;j++){if(Math.random()>.22){let s=.85+Math.random()*.18;let b=mesh(new THREE.BoxGeometry(s,.09,s),Math.random()>.5?stone:darkStone,scene,i*1.12,-.045,j*1.12);b.position.y=-.045+Math.random()*.025;b.rotation.y=(Math.random()-.5)*.08;b.receiveShadow=true;}}
+for(let i=0;i<18;i++){let a=i/18*Math.PI*2,r=10.5;let x=Math.cos(a)*r,z=Math.sin(a)*r;box(scene,x,1.1,z,.8,2.2,.8,stoneLight,-a);box(scene,x,2.35,z,1.15,.25,1.15,stoneLight,-a);if(i%2===0)box(scene,x,3.1,z,.45,1.4,.45,darkStone,-a)}
+// Ruined arch fragments and rubble
+for(let i=0;i<28;i++){let a=Math.random()*Math.PI*2,r=7+Math.random()*5;let x=Math.cos(a)*r,z=Math.sin(a)*r;let b=box(scene,x,.22+Math.random()*.25,z,.45+Math.random()*.8,.4+Math.random()*.5,.5+Math.random()*.7,Math.random()>.5?stone:stoneLight,Math.random()*2);b.rotation.z=(Math.random()-.5)*.2;}
+function makeDagger(parent,side){
+ const pivot=new THREE.Group();pivot.position.set(side*.38,.92,.04);parent.add(pivot);
+ box(pivot,0,-.03,0,.09,.24,.09,leather);
+ box(pivot,0,.1,0,.23,.045,.08,gold);
+ const blade=mesh(new THREE.ConeGeometry(.065,.48,4),steel,pivot,0,.36,0);blade.rotation.x=Math.PI;
+ box(pivot,0,.34,0,.12,.2,.035,steel);
+ pivot.rotation.x=.15;return pivot;
+}
+function makeAssassin(){
+ const root=new THREE.Group();scene.add(root);
+ const torso=mesh(new THREE.CapsuleGeometry(.31,.58,4,8),cloth,root,0,1.16,0);torso.scale.set(.9,1,.65);
+ const chest=mesh(new THREE.BoxGeometry(.49,.43,.28),leather,root,0,1.32,-.015);chest.rotation.z=-.06;
+ const belt=mesh(new THREE.CylinderGeometry(.29,.31,.11,8),gold,root,0,.91,0);
+ const head=mesh(new THREE.SphereGeometry(.22,12,10),skin,root,0,1.82,-.015);head.scale.set(.85,1.1,.85);
+ const hood=mesh(new THREE.SphereGeometry(.245,12,8,0,Math.PI*2,0,Math.PI*.65),cloth,root,0,1.9,0);hood.scale.set(1,1.05,1);
+ box(root,0,1.67,-.19,.36,.09,.12,leather);
+ const scarf=mesh(new THREE.ConeGeometry(.18,.38,6),gold,root,0,1.44,.16);scarf.rotation.x=.25;
+ for(const side of [-1,1]){
+  const arm=mesh(new THREE.CapsuleGeometry(.095,.43,3,6),leather,root,side*.37,1.26,0);arm.rotation.z=-side*.24;
+  const hand=mesh(new THREE.SphereGeometry(.09,8,6),skin,root,side*.43,.98,.02);
+  const leg=mesh(new THREE.CapsuleGeometry(.12,.48,3,6),cloth,root,side*.16,.47,0);leg.rotation.z=-side*.06;
+  box(root,side*.16,.18,.02,.24,.18,.3,leather);
+ }
+ const daggers=[makeDagger(root,-1),makeDagger(root,1)];
+ return {root,daggers,torso,head};
+}
+const player=makeAssassin();player.root.position.set(0,0,3);
+function makeOgre(){
+ const root=new THREE.Group();scene.add(root);
+ const body=mesh(new THREE.CapsuleGeometry(.72,.9,5,10),enemySkin,root,0,1.65,0);body.scale.set(1.05,1.2,.85);
+ const belly=mesh(new THREE.SphereGeometry(.68,12,10),enemyCloth,root,0,1.35,-.05);belly.scale.set(1,.85,.75);
+ const head=mesh(new THREE.SphereGeometry(.48,12,10),enemySkin,root,0,2.85,-.02);head.scale.set(1.15,.85,.9);
+ const brow=box(root,0,2.98,-.42,.75,.18,.13,enemyCloth);
+ for(const s of [-1,1]){
+  mesh(new THREE.SphereGeometry(.075,8,6),eyeMat,root,s*.2,2.87,-.445);
+  const arm=mesh(new THREE.CapsuleGeometry(.22,.85,4,8),enemySkin,root,s*.95,1.9,0);arm.rotation.z=-s*.28;
+  mesh(new THREE.SphereGeometry(.29,10,8),enemySkin,root,s*1.15,1.34,-.05);
+  const leg=mesh(new THREE.CapsuleGeometry(.24,.55,4,8),enemyCloth,root,s*.38,.48,0);
+  box(root,s*.38,.15,.1,.5,.25,.7,darkStone);
+ }
+ const club=new THREE.Group();club.position.set(1.22,1.35,.05);root.add(club);
+ const haft=mesh(new THREE.CylinderGeometry(.09,.13,1.65,7),mat(0x4a3020),club,0,-.35,0);haft.rotation.z=-.3;
+ const headClub=mesh(new THREE.BoxGeometry(.55,.48,.52),darkStone,club,.1,-1.05,0);headClub.rotation.z=-.3;
+ return {root,body,head,club};
+}
+const ogre=makeOgre();ogre.root.position.set(0,0,-4.2);
+let hp=100,stamina=100,enemyHp=100,kills=0,started=false,paused=false,dead=false,won=false,locked=false;
+let attackTimer=0,skillTimer=0,dodgeTimer=0,hitFlash=0,enemyAttack=0,enemyRecover=0,enemyStun=0,combo=0,comboWindow=0,invuln=0,elapsed=0;
+const v=new THREE.Vector3(),camTarget=new THREE.Vector3(),desiredCam=new THREE.Vector3();
+let moveX=0,moveY=0,lookX=0,lookY=0,lookTouch=null;
+const $=s=>document.querySelector(s);
+function setMessage(title,sub='',duration=1800){const el=$('#message');el.innerHTML=title+(sub?'<small>'+sub+'</small>':'');el.style.opacity='1';clearTimeout(setMessage.t);setMessage.t=setTimeout(()=>el.style.opacity='0',duration)}
+function updateHud(){
+ $('#hp').style.width=Math.max(0,hp)+'%';$('#hpText').textContent=Math.ceil(hp)+' / 100';
+ $('#stamina').style.width=stamina+'%';$('#stText').textContent=Math.ceil(stamina)+' / 100';
+ $('#enemyHud').style.display=started&&!won?'block':'none';$('#enemyFill').style.width=Math.max(0,enemyHp)+'%';$('#enemyPct').textContent=Math.ceil(enemyHp)+'%';$('#kills').textContent='OGRES vaincus : '+kills;
+}
+function targetEnemy(){const d=player.root.position.distanceTo(ogre.root.position);return d<8?ogre:null}
+function doAttack(){
+ if(!started||paused||dead||won||attackTimer>0||stamina<7)return;
+ stamina-=7;attackTimer=.38;combo=(combo%3)+1;comboWindow=.7;
+ const t=targetEnemy();if(t){
+  const delta=t.root.position.clone().sub(player.root.position);const dist=delta.length();delta.y=0;delta.normalize();
+  const facing=new THREE.Vector3(Math.sin(player.root.rotation.y),0,Math.cos(player.root.rotation.y));
+  if(dist<2.65&&facing.dot(delta)>.05){
+   const dmg=combo===3?15:9;enemyHp=Math.max(0,enemyHp-dmg);enemyStun=.22;hitFlash=.12;
+   ogre.body.material=ogre.body.material;ogre.root.position.addScaledVector(delta,.12);
+   if(enemyHp<=0)enemyDefeated();
+  }else if(dist<3.5){setMessage('À PORTÉE !','Rapproche-toi et fais face à l’ogre.',700)}
+ }
+ player.daggers.forEach((d,i)=>{d.rotation.x=-1.8;d.rotation.z=(i===0?1:-1)*.85});
+ updateHud();
+}
+function doDodge(){
+ if(!started||paused||dead||won||dodgeTimer>0||stamina<22)return;
+ stamina-=22;dodgeTimer=.48;invuln=.42;
+ const f=new THREE.Vector3(Math.sin(player.root.rotation.y),0,Math.cos(player.root.rotation.y));
+ player.root.position.addScaledVector(f,-1.05);
+ player.root.position.x=THREE.MathUtils.clamp(player.root.position.x,-9,9);player.root.position.z=THREE.MathUtils.clamp(player.root.position.z,-9,9);
+ setMessage('ESQUIVE','',350);updateHud();
+}
+function doSkill(){
+ if(!started||paused||dead||won||skillTimer>0||stamina<35)return;
+ stamina-=35;skillTimer=3.2;attackTimer=.55;invuln=.25;
+ const t=targetEnemy();if(t){
+  const d=t.root.position.distanceTo(player.root.position);
+  if(d<3.8){enemyHp=Math.max(0,enemyHp-24);enemyStun=.5;if(enemyHp<=0)enemyDefeated()}
+ }
+ setMessage('ÉCLIPSE','Frappe éclair !',600);player.daggers.forEach((d,i)=>{d.rotation.x=-2.8;d.rotation.z=(i===0?1:-1)*1.1});updateHud();
+}
+function enemyDefeated(){won=true;kills++;enemyHp=0;ogre.root.visible=false;setMessage('OGRE VAINCU','La voie est libre… Recharge pour recommencer.',5000);updateHud()}
+function playerHit(dmg){if(invuln>0||dead||won)return;hp=Math.max(0,hp-dmg);hitFlash=.18;updateHud();setMessage('IMPACT','Esquive juste avant le coup.',550);if(hp<=0){dead=true;setMessage('VOUS ÊTES TOMBÉ','Appuie sur ↻ pour recommencer.',999999);}}
+function resetGame(){hp=100;stamina=100;enemyHp=100;kills=0;dead=won=false;ogre.root.visible=true;player.root.position.set(0,0,3);player.root.rotation.y=0;ogre.root.position.set(0,0,-4.2);enemyAttack=enemyRecover=enemyStun=0;$('#overlay').style.display='none';started=true;paused=false;$('#pause').textContent='Ⅱ Pause';setMessage('LES RUINES OUBLIÉES','Un ogre bloque le passage.',1800);updateHud()}
+$('#start').addEventListener('click',resetGame);
+$('#pause').addEventListener('click',()=>{if(!started)return;paused=!paused;$('#pause').textContent=paused?'▶ Reprendre':'Ⅱ Pause';if(paused)setMessage('PAUSE','Appuie sur Reprendre.',999999);else $('#message').style.opacity='0'});
+$('#lock').addEventListener('click',()=>{locked=!locked;$('#lock').classList.toggle('active',locked);$('#lock').textContent=locked?'◎ CIBLE FIXÉE':'◎ CIBLER'});
+$('#attack').addEventListener('pointerdown',e=>{e.preventDefault();doAttack()});
+$('#dodge').addEventListener('pointerdown',e=>{e.preventDefault();doDodge()});
+$('#skill').addEventListener('pointerdown',e=>{e.preventDefault();doSkill()});
+// Virtual joystick
+const zone=$('#stickZone'),knob=$('#stick');let joyId=null,joyCenter={x:0,y:0};
+zone.addEventListener('pointerdown',e=>{e.preventDefault();joyId=e.pointerId;zone.setPointerCapture(joyId);const r=zone.getBoundingClientRect();joyCenter={x:r.left+r.width/2,y:r.top+r.height/2};joyMove(e)});
+zone.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
+function joyMove(e){const dx=e.clientX-joyCenter.x,dy=e.clientY-joyCenter.y,lim=43,len=Math.hypot(dx,dy)||1;const x=dx/Math.max(1,len)*Math.min(len,lim),y=dy/Math.max(1,len)*Math.min(len,lim);knob.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`;moveX=x/lim;moveY=y/lim}
+function joyEnd(e){if(e.pointerId===joyId){joyId=null;moveX=moveY=0;knob.style.transform='translate(-50%,-50%)'}}
+zone.addEventListener('pointerup',joyEnd);zone.addEventListener('pointercancel',joyEnd);
+// Right side drag controls camera, without blocking action buttons
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.clientX>innerWidth*.43&&e.clientY>innerHeight*.18){lookTouch={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)}});
+renderer.domElement.addEventListener('pointermove',e=>{if(lookTouch&&e.pointerId===lookTouch.id){lookX+=(e.clientX-lookTouch.x)*.008;lookY=THREE.MathUtils.clamp(lookY+(e.clientY-lookTouch.y)*.004,-.35,.65);lookTouch.x=e.clientX;lookTouch.y=e.clientY}});
+renderer.domElement.addEventListener('pointerup',e=>{if(lookTouch&&e.pointerId===lookTouch.id)lookTouch=null});
+renderer.domElement.addEventListener('pointercancel',()=>lookTouch=null);
+addEventListener('keydown',e=>{if(e.code==='Space')doAttack();if(e.code==='ShiftLeft')doDodge();if(e.code==='KeyE')doSkill();if(e.code==='KeyL')locked=!locked});
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));$('#rotate').style.display=innerWidth<innerHeight&&innerWidth<520?'none':'none'}
+addEventListener('resize',resize);
+const clock=new THREE.Clock();
+function tick(){
+ requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.04);elapsed+=dt;
+ if(started&&!paused&&!dead&&!won){
+  if(attackTimer>0)attackTimer-=dt;if(dodgeTimer>0)dodgeTimer-=dt;if(skillTimer>0)skillTimer-=dt;if(invuln>0)invuln-=dt;if(enemyStun>0)enemyStun-=dt;if(enemyRecover>0)enemyRecover-=dt;if(comboWindow>0)comboWindow-=dt;else combo=0;
+  stamina=Math.min(100,stamina+(attackTimer>0?3:13)*dt);
+  const camYaw=player.root.rotation.y+lookX;
+  const inputLen=Math.hypot(moveX,moveY);
+  if(inputLen>.08){
+   const forward=new THREE.Vector3(Math.sin(camYaw),0,Math.cos(camYaw));
+   const right=new THREE.Vector3(forward.z,0,-forward.x);
+   v.set(0,0,0).addScaledVector(forward,-moveY).addScaledVector(right,moveX).normalize();
+   if(!locked)player.root.rotation.y=Math.atan2(v.x,v.z);
+   else {const to=ogre.root.position.clone().sub(player.root.position);player.root.rotation.y=Math.atan2(to.x,to.z)}
+   if(dodgeTimer<=0&&attackTimer<=0){player.root.position.addScaledVector(v,dt*3.5*Math.min(inputLen,1));}
+  }
+  player.root.position.x=THREE.MathUtils.clamp(player.root.position.x,-9.1,9.1);player.root.position.z=THREE.MathUtils.clamp(player.root.position.z,-9.1,9.1);
+  // Simple dagger swings return to idle
+  player.daggers.forEach((d,i)=>{if(attackTimer<=0){d.rotation.x=THREE.MathUtils.damp(d.rotation.x,.15,10,dt);d.rotation.z=THREE.MathUtils.damp(d.rotation.z,0,10,dt)}});
+  player.torso.rotation.z=Math.sin(elapsed*8)*.025*(inputLen>.1?1:0);
+  // Ogre follows, telegraphs, attacks and recovers
+  if(ogre.root.visible){
+   const delta=player.root.position.clone().sub(ogre.root.position);delta.y=0;const dist=delta.length();
+   if(dist>2.25&&dist<14&&enemyStun<=0){delta.normalize();ogre.root.position.addScaledVector(delta,dt*(enemyAttack>0?0:.9));ogre.root.rotation.y=Math.atan2(delta.x,delta.z)}
+   if(enemyAttack>0){enemyAttack-=dt;ogre.club.rotation.z=Math.sin((.65-enemyAttack)*7)*.8;if(enemyAttack<=0){ogre.club.rotation.z=0;enemyRecover=.8;if(dist<2.75)playerHit(17)}}
+   else if(enemyRecover<=0&&enemyStun<=0&&dist<2.7){enemyAttack=.65;setMessage('ATTENTION !','L’ogre prépare une attaque.',500)}
+   const bob=Math.sin(elapsed*2.3)*.035;ogre.body.position.y=1.65+bob;ogre.head.position.y=2.85+bob;
+  }
+  updateHud();
+ }
+ // camera orbit/follow
+ const yaw=player.root.rotation.y+lookX;
+ const distance=6.2;
+ desiredCam.set(player.root.position.x-Math.sin(yaw)*distance*Math.cos(lookY),player.root.position.y+3.1+lookY*3,player.root.position.z-Math.cos(yaw)*distance*Math.cos(lookY));
+ camera.position.lerp(desiredCam,.12);
+ camTarget.set(player.root.position.x,player.root.position.y+1.25,player.root.position.z);
+ if(locked&&ogre.root.visible){const midpoint=ogre.root.position.clone().add(camTarget).multiplyScalar(.5);camera.lookAt(midpoint.x,midpoint.y+.4,midpoint.z)}else camera.lookAt(camTarget);
+ renderer.render(scene,camera);
+}
+updateHud();resize();tick();
+</script>
+</body>
+</html>
